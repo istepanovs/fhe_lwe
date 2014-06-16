@@ -565,8 +565,34 @@ ciphertext Recrypt(evk eval_key, ciphertext C)
 int main()
 {
     std::uniform_int_distribution<> dist(0, 1);
-    
+
     clock_t start_time;
+    {
+        // FHE fhe(/*n*/ 2, /*ell0*/ 6, /*ell1*/ 20, /*beta*/ 1); // Passed 20 tests, each 9-37 sec (average ~18 sec)
+        FHE fhe(/*n*/ 4, /*ell0*/ 6, /*ell1*/ 20, /*beta*/ 1); // Passed 3 tests, 520 - 1250 sec (average ~800 sec)
+        evk eval_key = fhe.get_evk();
+        for (int test = 0; test < 20; ++test)
+        {
+            int m0 = dist(engine), m1 = dist(engine);
+            ciphertext C0 = fhe.Enc(m0), C1 = fhe.Enc(m1);
+
+            START_TIME;
+            ciphertext andC = AND(C0, C1);
+            ciphertext nandC = NOT(andC);
+            ciphertext rec_nandC = Recrypt(eval_key, nandC);
+            FINISH_TIME;
+
+            if (fhe.Dec(rec_nandC) == 1 - (m0 * m1))
+                printf("Passed NAND time test for beta=1, n=2.\n");
+            else
+            {
+                printf("Incorrect parameters!\n");
+                break;
+            }
+        }
+    }
+    return 0;
+
     {
         FHE fhe(/*n*/ 10, /*ell0*/ 6, /*ell1*/ 2, /*beta*/ 0);
         evk eval_key = fhe.get_evk();
@@ -669,3 +695,28 @@ int main()
 
 	return 0;
 }
+
+/*
+beta = sqrt(n)
+
+209268315701.47467
+2 2 10 42 20.97152 4 min 18 MB
+4369200843606.928
+3 2 11 45 138.412032 73 min 147 MB
+59373627899904.0
+4 2 12 48 805.306368 17 h 864 MB
+
+beta = 1
+
+42707819530.9132
+2 1 9 40 4.718592 1 min 8 MB
+865013500350.4625
+3 1 10 42 31.45728 15 min 59 MB
+11958799564800.0
+4 1 11 45 184.549376 4 h 349 MB
+
+beta = 0
+
+310864543.10519236
+10 0 6 2 0.24576 1 min 1 MB
+*/
