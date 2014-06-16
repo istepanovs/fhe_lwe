@@ -31,6 +31,7 @@ long long modAdd(unsigned long long a, unsigned long long b, unsigned long long 
     return res;
 }
 
+// See http://stackoverflow.com/questions/12168348/ways-to-do-modulo-multiplication-with-primitive-types
 long long modMult(unsigned long long a, unsigned long long b, unsigned long long q)
 {
     assert(q > 0 && q <= MAX_MODULUS, "modMult: incorrect modulus size.");
